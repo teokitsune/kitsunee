@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Тест Kitsune</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: linear-gradient(135deg, #6dd5fa, #ff758c);
+      background-size: 400% 400%;
+      animation: gradient 10s ease infinite;
+      padding: 20px;
+    }
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .container {
+      max-width: 850px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      animation: fadeIn 0.7s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h1 {
+      text-align: center;
+    }
+    .question h3 {
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      background: #eee;
+      margin: 6px 0;
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    label:hover {
+      background: #ddd;
+    }
+    label.correct { background-color: #c8f7c5; }
+    label.incorrect { background-color: #f7c5c5; }
+    .buttons, .result {
+      text-align: center;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      background: #3498db;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #777;
+    }
+    .progress {
+      text-align: center;
+      margin-top: 10px;
+      color: #555;
+    }
+    .summary {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    .summary h3 {
+      margin-top: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Мини-тест по Макроэкономике</h1>
+  <div id="quiz"></div>
+  <div class="buttons">
+    <button onclick="restartQuiz()">Начать заново</button>
+    <button onclick="checkAnswers()">Проверить ответы</button>
+  </div>
+  <div class="progress" id="progress"></div>
+  <div class="result" id="result"></div>
+  <div class="summary" id="summary" style="display:none;"></div>
+  <div class="footer">mustafo</div>
+</div>
+
+<script>
+const questions = [
+  { q: "Каких макроэкономических агентов включает в себя трехсекторная модель экономики?", options: [" домашнее хозяйство, государственный сектор, фирмы (предприятия)", "иностранный сектор, государственный сектор, домашнее хозяйство", "домашнее хозяйство, фирмы (предприятия), иностранный сектор", "иностранный сектор, фирмы (предприятия), государственный сектор"], answer: 0 },
+  { q: "Какой сектор НЕ относится к макроэкономическим субъектам?", options: [" сельскохозяйственный сектор", "предпринимательский сектор", "сектор домашних хозяйств", "государственный сектор"], answer: 0 },
+  { q: "Какой метод макроэкономических исследований является основным?", options: [" метод моделирования", "метод экстраполяции", "метод сравнительного анализа", "метод анализа публикаций"], answer: 0 },
+  { q: "Когда возникла макроэкономика как наука?", options: [" в XX столетии", "в XІХ столетии", "в XVІІ столетии", "в XVІ столетии"], answer: 0 },
+  { q: "Как называется макроэкономический агент, который при включении в модель кругооборота преобразует закрытую экономику в открытую экономику?", options: [" иностранный сектор", "домашние хозяйства", "государство", "предприятия"], answer: 0 },
+];
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+let userAnswers = [];
+
+function renderQuiz() {
+  shuffle(questions);
+  const quiz = document.getElementById('quiz');
+  quiz.innerHTML = '';
+  userAnswers = [];
+
+  questions.forEach((q, idx) => {
+    const correctText = q.options[q.answer];
+    shuffle(q.options);
+    q.answer = q.options.indexOf(correctText);
+
+    const div = document.createElement('div');
+    div.className = 'question';
+    div.innerHTML = `<h3>\${idx+1}. \${q.q}</h3>`;
+    q.options.forEach((opt, i) => {
+      div.innerHTML += `
+        <label>
+          <input type="radio" name="q\${idx}" value="\${i}"> \${opt}
+        </label>`;
+    });
+    quiz.appendChild(div);
+  });
+  document.getElementById('result').innerText = '';
+  document.getElementById('summary').style.display = 'none';
+  document.getElementById('progress').innerText = `Вопросов: \${questions.length}`;
+}
+
+function checkAnswers() {
+  let correct = 0;
+  const summary = [];
+
+  questions.forEach((q, idx) => {
+    const selected = document.querySelector(`input[name='q\${idx}']:checked`);
+    const labels = document.querySelectorAll(`input[name='q\${idx}']`);
+    labels.forEach((input, i) => {
+      const label = input.parentElement;
+      label.classList.remove("correct", "incorrect");
+      if (i == q.answer) label.classList.add("correct");
+      if (selected && parseInt(selected.value) === i && i !== q.answer) {
+        label.classList.add("incorrect");
+      }
+    });
+    const selectedIdx = selected ? parseInt(selected.value) : -1;
+    if (selectedIdx === q.answer) correct++;
+    summary.push({
+      question: q.q,
+      selected: selected ? q.options[selectedIdx] : "—",
+      correct: q.options[q.answer],
+      status: selectedIdx === q.answer ? "✅" : "❌"
+    });
+  });
+
+  const percent = Math.round((correct / questions.length) * 100);
+  document.getElementById('result').innerText = `Правильно: \${correct} из \${questions.length} (\${percent}%)`;
+
+  const summaryBlock = document.getElementById('summary');
+  summaryBlock.innerHTML = `<h3>Результаты:</h3>` + summary.map(s => `
+    <p><strong>\${s.status} \${s.question}</strong><br/>
+    Вы выбрали: <em>\${s.selected}</em><br/>
+    Правильный ответ: <strong>\${s.correct}</strong></p>
+  `).join('');
+  summaryBlock.style.display = 'block';
+}
+
+function restartQuiz() {
+  renderQuiz();
+}
+
+renderQuiz();
+</script>
+</body>
+</html>
